@@ -17,44 +17,44 @@ Current limitation: this first renderer requires timestamped SRT or LRC lyrics. 
 Requirements: Node 20+, Python 3.11+, FFmpeg and FFprobe.
 
 Backend:
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
 
-    cd backend
-    python -m venv .venv
-    source .venv/bin/activate
-    pip install -r requirements.txt
-    uvicorn app.main:app --reload --port 8000
+Frontend (from repository root):
+```bash
+npm install
+cp .env.example .env.local
+npm run dev
+```
 
-Frontend (from reelforge):
-
-    npm install
-    cp .env.example .env.local
-    npm run dev
-
-Set NEXT_PUBLIC_MUSECUT_API_URL=http://localhost:8000. Open http://localhost:3000.
+Set `NEXT_PUBLIC_MUSECUT_API_URL=http://localhost:8000`. Open http://localhost:3000.
 
 ## Docker worker
-
-    cd backend
-    docker build -t musecut-worker .
-    docker run --rm -p 8000:8000 -e CORS_ORIGINS=http://localhost:3000 musecut-worker
+```bash
+cd backend
+docker build -t musecut-worker .
+docker run --rm -p 8000:8000 -e CORS_ORIGINS=http://localhost:3000 musecut-worker
+```
 
 ## API
-POST /api/generate multipart fields: video, lyrics, timed_lyrics (.srt or .lrc), clip_count (3-10), caption_style. Returns musecut-reels.zip.
+`POST /api/generate` multipart fields: `video`, `lyrics`, `timed_lyrics` (.srt or .lrc), `clip_count` (3-10), `caption_style`. Returns `musecut-reels.zip`.
 
 ## GitHub Pages deployment
+The static frontend is deployed from `main` by GitHub Actions using `.github/workflows/pages.yml`.
 
-The frontend is configured for static export and is deployed by GitHub Actions from the `feat/musecut-mvp` branch. The expected project-site URL is:
+Website: https://pinakbakshi.github.io/MUSECUT/
 
-    https://pinakbakshi.github.io/chatgpt-project-archive/
+GitHub Pages hosts only the static frontend. It cannot execute the FastAPI/FFmpeg rendering worker. To enable the Generate button on the hosted site, deploy the worker to a separate service and add a repository Actions variable named `MUSECUT_API_URL` containing its HTTPS base URL (no trailing slash). The workflow injects this value as `NEXT_PUBLIC_MUSECUT_API_URL`. The worker must allow the Pages origin in `CORS_ORIGINS`.
 
-In the repository, open **Settings → Pages** and set **Build and deployment → Source** to **GitHub Actions**. The workflow is `.github/workflows/musecut-pages.yml`.
-
-GitHub Pages hosts only the static frontend. It cannot execute the FastAPI/FFmpeg rendering worker. To enable the Generate button on the hosted site, configure a publicly reachable worker and add a repository Actions variable named `MUSECUT_API_URL` containing its HTTPS base URL (no trailing slash). The Pages build injects this value as `NEXT_PUBLIC_MUSECUT_API_URL`. The worker must allow the Pages origin in `CORS_ORIGINS`.
-
-For local rendering, run the FastAPI worker using the instructions above and set `NEXT_PUBLIC_MUSECUT_API_URL=http://localhost:8000` for a local development build. No paid AI API is required by this MVP.
+For local rendering, set `NEXT_PUBLIC_MUSECUT_API_URL=http://localhost:8000` for a local development build. No paid AI API is required by this MVP.
 
 ## Privacy
-Uploads are written to per-job temporary directories. Configure MAX_UPLOAD_MB and CORS_ORIGINS. Add authentication, rate limiting, durable job storage and scheduled temporary-file cleanup before multi-user public launch. Only process media you own or are licensed to use.
+Uploads are written to per-job temporary directories. Configure `MAX_UPLOAD_MB` and `CORS_ORIGINS`. Add authentication, rate limiting, durable job storage and scheduled temporary-file cleanup before multi-user public launch. Only process media you own or are licensed to use.
 
 ## Next milestones
 1. Plain-text lyric forced alignment with WhisperX and language-aware aligners.
